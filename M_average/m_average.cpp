@@ -130,26 +130,7 @@ long double calcAverage(int pos, int win_size, vector<long double> data){
 	return sum/nbrValues;
 }
 
-vector <long double> movingAverage (int win_size, vector<long double> data){
-	/*
-	Calcule la moyenne mobile d'un jeu de données. 
-	:param win_size: taille de l'interval de la moyenne
-	:param data: jeu de données
-	:type win_size: int
-	:type data: vector<long double>
-	:return mvAvg: valeurs des moyennes mobiles du jeu
-	:type return: vector<long double>
-	*/
-	vector <long double> mvAvg;
-	long double avg;
-	for (int i = 0 ; i < data.size() ; i++){
-		avg = calcAverage(i, win_size, data);
-		mvAvg.push_back(avg);
-	}
-	return mvAvg;
-}
-
-string prepareFileContent (vector<long double> ColTime, vector<long double> ColAvg){
+string avg_FileContent (vector<long double> ColTime, vector<long double> ColAvg){
 	/*
 	Prepare le contenu du fichier sous forme d'une string avec 
 	une colone pour le temps et une colone pour la moyenne mobile. 
@@ -167,17 +148,44 @@ string prepareFileContent (vector<long double> ColTime, vector<long double> ColA
 	return fileContent;
 }
 
+string movingAverage (string fileName, int win_size){
+	/*
+	Calcule la moyenne mobile d'un jeu de données. 
+	:param fileName: nom du fichier source (données du canal) 
+	:param newFileName: nom du nouveau fichier (données m_average) 
+	:param win_size: taille de l'interval des moyennes
+	:type win_size: int
+	:type fileName: string
+	:type newFileName: string
+	:return fileContent: contenu du nouveau fichier (temps/m_avg)
+	:type return: string
+	*/
+	// 1) preparation des données : 
+	string data = read_data(fileName);
+	vector<string> dataLines = split(data, "\n");
+	vector<long double> ColoneTime = convertColoneStoLD(0, dataLines);
+	vector<long double> ColoneChannel = convertColoneStoLD(1, dataLines); 
+	// 2) calcule de la moyenne mobile : 
+	vector <long double> mvAvg;
+	long double avg;
+	for (int i = 0 ; i < data.size() ; i++){
+		avg = calcAverage(i, win_size, ColoneChannel);
+		mvAvg.push_back(avg);
+	}
+	// 3) preparation du nouveau fichier : 
+	string fileContent = "%time av_value\n";
+	for (int i = 0 ; i < ColoneTime.size() ; i++){
+		fileContent += to_string(ColoneTime[i])+" "+to_string(mvAvg[i])+"\n";
+	}
+	return fileContent;
+}
+
 int main (int argc, char *argv[]){
 	try{
 		string fileName = argv[1];
 		string newFileName = argv[2];
 		int win_size = stoi(argv[3]);
-		string data = read_data(fileName);
-		vector<string> dataLines = split(data, "\n");
-		vector<long double> ColoneTime = convertColoneStoLD(0, dataLines);
-		vector<long double> ColoneChannel = convertColoneStoLD(1, dataLines); 
-		vector <long double> mvAvg = movingAverage(win_size, ColoneChannel);
-		string fileContent = prepareFileContent(ColoneTime, ColoneChannel);
+		string fileContent = movingAverage(fileName, win_size);
 		writeFile(fileContent, newFileName);
 	} catch (exception& ex){
 		cerr << "probleme dans les arguments" << endl;
