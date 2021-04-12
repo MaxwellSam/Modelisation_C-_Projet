@@ -169,86 +169,60 @@ vector<string> splitElements (string line){
 	return content;
 }
 
-string extractChannel (int numChannel, string filename) {
+string extractChannel (int numChannel, string fileContent) {
 	/*
-	Produit à partir du nom du fichier et du numero de channel, 
+	Produit à partir du contenu du fichier et du numero de channel, 
 	une string contenant les informations sur le temps et les données 
 	du canal selectionné. 
 	:param numChannel: numero du canal
-	:param filename: nom du fichier de base
+	:param fileContent: contenu du fichier de base en chaine de caractères
 	:type numChannel: int 
-	:type filename: string
-	:return newData: la chaine de caractère contenant les infos du canal
-	:type newData: string
+	:type fileContent: string
+	:return newFileContent: la chaine de caractère contenant les infos du canal
+	:type return: string
 	*/
 	
-	string newData = "";  
+	string newFileContent = "%time channel_"+to_string(numChannel)+"\n"; // première ligne du nouveau fichier  
 	vector <string> elementsLine;
-	cout << "Extraction des données en cours ...";
 	// preparation de la source : 
-	string content=read_data(filename); // extraction du fichier
-	vector<string> dataLines=split(content, "\n"); // découpe des lignes
+	vector<string> dataLines=split(fileContent, "\n"); // découpe des lignes
 	// creation de la nouvelle chaine de caractère :  
-	newData += "%time channel_"+to_string(numChannel)+"\n"; // première ligne du fichier
-	
 	for (int i = 4 ; i < dataLines.size() ; i++){
 		elementsLine = splitElements(dataLines[i]);
-		newData += elementsLine[0]+" "+elementsLine[numChannel]+"\n";
+		newFileContent += elementsLine[0]+" "+elementsLine[numChannel]+"\n";
 	}
-	cout << " chargement terminé !" << endl;
-	return newData;
+	return newFileContent;
 }
 
 /*
  ------------------------ m_average functions ---------------------------------
 */
 
-string avg_FileContent (vector<long double> ColTime, vector<long double> ColAvg){
+string movingAverage (string fileContent, int win_size){
 	/*
-	Prepare le contenu du fichier sous forme d'une string avec 
-	une colone pour le temps et une colone pour la moyenne mobile. 
-	:param ColTime: vecteur contenant les valeurs de temps
-	:param ColAvg: vecteur contenant les valeurs de moyennes mobiles
-	:type ColTime: vector<long double>
-	:type ColAvg: vector<long double>
-	:return fileContent: chaine de caractère correspondant au contenu du future fichier
-	:type return: string
-	*/
-	string fileContent = "%time av_value\n";
-	for (int i = 0 ; i < ColTime.size() ; i++){
-		fileContent += to_string(ColTime[i])+" "+to_string(ColAvg[i])+"\n";
-	}
-	return fileContent;
-}
-
-string movingAverage (string fileName, int win_size){
-	/*
-	Calcule la moyenne mobile d'un jeu de données. 
-	:param fileName: nom du fichier source (données du canal) 
-	:param newFileName: nom du nouveau fichier (données m_average) 
+	Calcule la moyenne mobile d'un jeu de données à partir du contenu du fichier. 
+	:param fileContent: contenu du fichier de base en chaine de caractères 
 	:param win_size: taille de l'interval des moyennes
 	:type win_size: int
-	:type fileName: string
-	:type newFileName: string
-	:return fileContent: contenu du nouveau fichier (temps/m_avg)
+	:type fileContent: string
+	:return newFileContent: contenu du nouveau fichier (temps/m_avg)
 	:type return: string
 	*/
 	// 1) preparation des données : 
-	string data = read_data(fileName);
-	vector<string> dataLines = split(data, "\n");
+	vector<string> dataLines = split(fileContent, "\n");
 	vector<long double> ColoneTime = convertColoneStoLD(0, dataLines);
 	vector<long double> ColoneChannel = convertColoneStoLD(1, dataLines); 
 	// 2) calcule de la moyenne mobile : 
 	vector <long double> mvAvg;
 	long double avg;
-	for (int i = 0 ; i < data.size() ; i++){
+	for (int i = 0 ; i < ColoneTime.size() ; i++){
 		avg = calcAverage(i, win_size, ColoneChannel);
 		mvAvg.push_back(avg);
 	}
 	// 3) preparation du nouveau fichier : 
-	string fileContent = "%time av_value\n";
+	string newFileContent = "%time av_value\n";
 	for (int i = 0 ; i < ColoneTime.size() ; i++){
-		fileContent += to_string(ColoneTime[i])+" "+to_string(mvAvg[i])+"\n";
+		newFileContent += to_string(ColoneTime[i])+" "+to_string(mvAvg[i])+"\n";
 	}
-	return fileContent;
+	return newFileContent;
 }

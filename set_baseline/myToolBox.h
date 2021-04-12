@@ -14,11 +14,10 @@ vector<long double> convertColoneStoLD (int numColone, vector<string> dataLines)
 
 // extract functions :
 vector<string> splitElements (string line);
-string extractChannel (int numChannel, string filename);
+string extractChannel (int numChannel, string fileContent);
 
 // m_average functions :  
 long double calcAverage(int pos, int win_size, vector<long double> data);
-string avg_FileContent (vector<long double> ColTime, vector<long double> ColAvg);
-void movingAverage (string fileName, string newFileName, int win_size);
+string movingAverage (string fileContent, int win_size);
 
 #endif

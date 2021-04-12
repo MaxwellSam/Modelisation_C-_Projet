@@ -9,7 +9,6 @@
 #include <string>
 #include <vector>
 #include <fstream>
-#include <map>
 using namespace std; // utilisation de l'espace de nom de std
 
 string read_data(string file){
@@ -168,6 +167,6 @@ int main(int argc, char *argv[]){
 		writeFile(dataChannel, newFileName);
 		return 0;
 	} catch (exception& ex){
-		cerr << "probleme dans les arguments" << endl;
+		cerr << "Erreur : probleme dans les arguments" << endl;
 	}
 }
