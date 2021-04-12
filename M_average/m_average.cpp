@@ -9,9 +9,10 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <map>
 using namespace std; // utilisation de l'espace de nom de std
 
-string read_data(string file){
+string readFile(string file){
 	/*
 	Lecture d'un fichier txt
 	:param file: nom du fichier
@@ -76,36 +77,40 @@ vector<string> split(string value, string sep){
     return parsed;
 }
 
-vector<long double> convertColoneStoLD (int numColone, vector<string> dataLines){
+map<string, vector<long double> > getColumnsChannel (string fileContent){
 	/*
-	Convertie une colone d'un fichier txt en un vecteur de double
-	:param numColone: numero de la colone à extraire 
-	:param dataLines: vecteur contenant les lignes du fichier txt
-	:type numColone: int
-	:type dataLines: vector<float>
-	:return coloneConverted: vecteur contenant les données converties de la colone
-	:type return: vector<float>
+	Extrait les deux colones du contenu du fichier d'un canal. 
+	:param fileContent: contenu du fichier du canal
+	:type fileContent: string
+	:return data: les données du canal converties en nombre
+	:type return: map<string, vector<long double> >
 	*/
-	vector<long double> coloneConverted;
-	vector <string> content;
-	//string::size_type st;
-	long double value;
-	for (int i = 1 ; i < dataLines.size() ; i++){
-		content = split(dataLines[i], " ");
-		value = stold(content[numColone]);
-		coloneConverted.push_back(value); 
+	cout << "ok" << endl;
+	vector<string> linesFile = split(fileContent, "\n");
+	vector<long double> dataTime;
+	vector<long double> dataSignal;
+	map<string, vector<long double> > data;
+	vector<string> elements; // elements extraient d'une ligne
+	for (int i = 1 ; i < linesFile.size() ; i++){
+		elements = split(linesFile[i], " ");
+		dataTime.push_back(stold(elements[0]));
+		cout << "time " << elements[0];
+		dataTime.push_back(stold(elements[1]));
+		cout << " signal " << elements[1] << endl;
 	}
-	return coloneConverted;
+	data["Time"] = dataTime;
+	data["Signal"] = dataSignal;
+	return data;
 }
 
-long double calcAverage(int pos, int win_size, vector<long double> data){
+long double calcAvg(int pos, int win_size, vector<long double> dataSignal){
 	/*
 	Calcule la moyenne sur un interval donné. Les positions de départ
 	et d'arret s'adaptent en fonction de la position dans le jeu de 
 	données. 
 	:param pos: position dans le jeu de données
 	:param win_size: interval autour de la position
-	:param data: jeu de données
+	:param dataSignal: jeu de données
 	:type pos: int 
 	:type win_size: int 
 	:type data: vector <long double>
@@ -118,75 +123,67 @@ long double calcAverage(int pos, int win_size, vector<long double> data){
 	if (pos < win_size){ // permet d'établir le start si l'interval est supérieur à l'interval possible à gauche de pos. 
 		pos_start = 0; 
 	}
-	if (pos+win_size > data.size()){ // idem mais pour la droite de pos. 
-		pos_stop = data.size()-1;
+	if (pos+win_size > dataSignal.size()){ // idem mais pour la droite de pos. 
+		pos_stop = dataSignal.size()-1;
 	}
 	int nbrValues = pos_stop - pos_start;
 	long double sum = 0;
 	
 	for (int i = pos_start ; i <= pos_stop ; i++){
-		sum += data[i];
+		sum += dataSignal[i];
 	}
 	return sum/nbrValues;
 }
 
-string avg_FileContent (vector<long double> ColTime, vector<long double> ColAvg){
+vector<long double> calcMovingAvg (vector<long double> dataSignal, int win_size){
 	/*
-	Prepare le contenu du fichier sous forme d'une string avec 
-	une colone pour le temps et une colone pour la moyenne mobile. 
-	:param ColTime: vecteur contenant les valeurs de temps
-	:param ColAvg: vecteur contenant les valeurs de moyennes mobiles
-	:type ColTime: vector<long double>
-	:type ColAvg: vector<long double>
-	:return fileContent: chaine de caractère correspondant au contenu du future fichier
-	:type return: string
+	Calcules la moyenne mobile d'un jeux de données. 
+	:param dataSignal: jeu de données
+	:param win_size: interval de la moyenne
+	:type dataSignal: vector<long double>
+	:param win_size: int
+	:return mvAvg: moyenne mobile
+	:type return: vector<long double>
 	*/
-	string fileContent = "%time av_value\n";
-	for (int i = 0 ; i < ColTime.size() ; i++){
-		fileContent += to_string(ColTime[i])+" "+to_string(ColAvg[i])+"\n";
-	}
-	return fileContent;
-}
-
-string movingAverage (string fileName, int win_size){
-	/*
-	Calcule la moyenne mobile d'un jeu de données. 
-	:param fileName: nom du fichier source (données du canal) 
-	:param newFileName: nom du nouveau fichier (données m_average) 
-	:param win_size: taille de l'interval des moyennes
-	:type win_size: int
-	:type fileName: string
-	:type newFileName: string
-	:return fileContent: contenu du nouveau fichier (temps/m_avg)
-	:type return: string
-	*/
-	// 1) preparation des données : 
-	string data = read_data(fileName);
-	vector<string> dataLines = split(data, "\n");
-	vector<long double> ColoneTime = convertColoneStoLD(0, dataLines);
-	vector<long double> ColoneChannel = convertColoneStoLD(1, dataLines); 
-	// 2) calcule de la moyenne mobile : 
+	cout << "ok ?" << endl;
 	vector <long double> mvAvg;
 	long double avg;
-	for (int i = 0 ; i < data.size() ; i++){
-		avg = calcAverage(i, win_size, ColoneChannel);
+	for (int i = 0 ; i < dataSignal.size() ; i++){
+		cout << "ok ?" << endl;
+		avg = calcAvg(i, win_size, dataSignal);
 		mvAvg.push_back(avg);
 	}
-	// 3) preparation du nouveau fichier : 
-	string fileContent = "%time av_value\n";
-	for (int i = 0 ; i < ColoneTime.size() ; i++){
-		fileContent += to_string(ColoneTime[i])+" "+to_string(mvAvg[i])+"\n";
-	}
-	return fileContent;
+	return mvAvg;
 }
 
 int main (int argc, char *argv[]){
 	try{
+		// recuperation des arguments : 
 		string fileName = argv[1];
 		string newFileName = argv[2];
 		int win_size = stoi(argv[3]);
-		string fileContent = movingAverage(fileName, win_size);
-		writeFile(fileContent, newFileName);
+		cout << "fileName " << fileName << " newFileName" << newFileName << endl;
+		// extraction des donnnées du fichier : 
+		string fileContent = readFile(fileName);
+		cout << fileContent << endl;
+		map<string, vector<long double> > dataChannel = getColumnsChannel(fileContent);
+		cout << "ok" << endl;
+		cout << dataChannel["Time"].size() << endl;
+		cout << dataChannel["Time"][1] << endl;
+		// for (int i = 0 ; i < dataChannel["Time"].size() ; i++){
+// 			cout << dataChannel["Time"][0];
+// 		}
+		// calcule de la moyenne mobile : 
+		vector<long double> dataSignal = dataChannel["Signal"];
+		vector<long double> mvAvg = calcMovingAvg(dataChannel["Signal"], win_size);
+		cout << "mvAvg " << mvAvg[4] << endl;
+		// ecriture du fichier : 
+		string newFileContent = "%time av_value\n";
+		for (int i = 0 ; i < dataChannel["Time"].size() ; i++){
+			newFileContent += to_string(dataChannel["Time"][i])+" "+to_string(mvAvg[i])+"\n";
+		}
+		cout << newFileContent << endl;
+		writeFile(newFileContent, newFileName);
 	} catch (exception& ex){
 		cerr << "probleme dans les arguments" << endl;
 	}
