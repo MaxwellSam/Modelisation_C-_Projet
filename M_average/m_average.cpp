@@ -85,7 +85,6 @@ map<string, vector<long double> > getColumnsChannel (string fileContent){
 	:return data: les données du canal converties en nombre
 	:type return: map<string, vector<long double> >
 	*/
-	cout << "ok" << endl;
 	vector<string> linesFile = split(fileContent, "\n");
 	vector<long double> dataTime;
 	vector<long double> dataSignal;
@@ -94,9 +93,7 @@ map<string, vector<long double> > getColumnsChannel (string fileContent){
 	for (int i = 1 ; i < linesFile.size() ; i++){
 		elements = split(linesFile[i], " ");
 		dataTime.push_back(stold(elements[0]));
-		cout << "time " << elements[0];
-		dataTime.push_back(stold(elements[1]));
-		cout << " signal " << elements[1] << endl;
+		dataSignal.push_back(stold(elements[1]));
 	}
 	data["Time"] = dataTime;
 	data["Signal"] = dataSignal;
@@ -145,11 +142,9 @@ vector<long double> calcMovingAvg (vector<long double> dataSignal, int win_size)
 	:return mvAvg: moyenne mobile
 	:type return: vector<long double>
 	*/
-	cout << "ok ?" << endl;
 	vector <long double> mvAvg;
 	long double avg;
 	for (int i = 0 ; i < dataSignal.size() ; i++){
-		cout << "ok ?" << endl;
 		avg = calcAvg(i, win_size, dataSignal);
 		mvAvg.push_back(avg);
 	}
@@ -162,27 +157,15 @@ int main (int argc, char *argv[]){
 		string fileName = argv[1];
 		string newFileName = argv[2];
 		int win_size = stoi(argv[3]);
-		cout << "fileName " << fileName << " newFileName" << newFileName << endl;
 		// extraction des donnnées du fichier : 
 		string fileContent = readFile(fileName);
-		cout << fileContent << endl;
 		map<string, vector<long double> > dataChannel = getColumnsChannel(fileContent);
-		cout << "ok" << endl;
-		cout << dataChannel["Time"].size() << endl;
-		cout << dataChannel["Time"][1] << endl;
-		// for (int i = 0 ; i < dataChannel["Time"].size() ; i++){
-// 			cout << dataChannel["Time"][0];
-// 		}
-		// calcule de la moyenne mobile : 
-		vector<long double> dataSignal = dataChannel["Signal"];
 		vector<long double> mvAvg = calcMovingAvg(dataChannel["Signal"], win_size);
-		cout << "mvAvg " << mvAvg[4] << endl;
 		// ecriture du fichier : 
 		string newFileContent = "%time av_value\n";
 		for (int i = 0 ; i < dataChannel["Time"].size() ; i++){
 			newFileContent += to_string(dataChannel["Time"][i])+" "+to_string(mvAvg[i])+"\n";
 		}
-		cout << newFileContent << endl;
 		writeFile(newFileContent, newFileName);
 	} catch (exception& ex){
 		cerr << "probleme dans les arguments" << endl;
