@@ -158,15 +158,20 @@ int main (int argc, char *argv[]){
 		string newFileName = argv[2];
 		int win_size = stoi(argv[3]);
 		// extraction des donnnées du fichier : 
+		cout << "* Extraction des données du fichier " << fileName << endl;
 		string fileContent = readFile(fileName);
 		map<string, vector<long double> > dataChannel = getColumnsChannel(fileContent);
+		cout << "** Données extraites" << endl;
+		cout << "* Calcule de la moyenne mobile" << endl;
 		vector<long double> mvAvg = calcMovingAvg(dataChannel["Signal"], win_size);
+		cout << "** Moyenne mobile calculée" << endl;
 		// ecriture du fichier : 
 		string newFileContent = "%time av_value\n";
 		for (int i = 0 ; i < dataChannel["Time"].size() ; i++){
 			newFileContent += to_string(dataChannel["Time"][i])+" "+to_string(mvAvg[i])+"\n";
 		}
 		writeFile(newFileContent, newFileName);
+		cout << "** fichier " << newFileName << " créé" << endl;
 	} catch (exception& ex){
 		cerr << "probleme dans les arguments" << endl;
 	}
