@@ -7,17 +7,17 @@
 #include <fstream>
 using namespace std;
 // common functions : 
-string read_data(string file);
+string readFile(string file);
 void writeFile (string fileContent,string newfileName);
 vector<string> split(string value, string sep);
-vector<long double> convertColoneStoLD (int numColone, vector<string> dataLines);
+map<string, vector<long double> > getColumnsChannel (string fileContent);
 
 // extract functions :
 vector<string> splitElements (string line);
-string extractChannel (int numChannel, string fileContent);
+map<string, vector<long double> > extractChannel (int numChannel, string fileContent);
 
 // m_average functions :  
-long double calcAverage(int pos, int win_size, vector<long double> data);
-string movingAverage (string fileContent, int win_size);
+long double calcAvg(int pos, int win_size, vector<long double> dataSignal);
+vector<long double> calcMovingAvg (vector<long double> dataSignal, int win_size);
 
 #endif

@@ -11,13 +11,14 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <map>
 using namespace std; // utilisation de l'espace de nom de std
 
 /*
  -------------------------- common functions ----------------------------------- 
 */
 
-string read_data(string file){
+string readFile(string file){
 	/*
 	Lecture d'un fichier txt
 	:param file: nom du fichier
@@ -36,6 +37,7 @@ string read_data(string file){
 	}else cerr << "Impossible d'ouvrir le fichier !" << endl;
 	return data;
 }
+
 
 void writeFile (string fileContent,string newfileName){
 	/*
@@ -82,59 +84,29 @@ vector<string> split(string value, string sep){
     return parsed;
 }
 
-vector<long double> convertColoneStoLD (int numColone, vector<string> dataLines){
+map<string, vector<long double> > getColumnsChannel (string fileContent){
 	/*
-	Convertie une colone d'un fichier txt en un vecteur de double
-	:param numColone: numero de la colone à extraire 
-	:param dataLines: vecteur contenant les lignes du fichier txt
-	:type numColone: int
-	:type dataLines: vector<float>
-	:return coloneConverted: vecteur contenant les données converties de la colone
-	:type return: vector<float>
+	Extrait les deux colones du contenu du fichier d'un canal. 
+	:param fileContent: contenu du fichier du canal
+	:type fileContent: string
+	:return data: les données du canal converties en nombre
+	:type return: map<string, vector<long double> >
 	*/
-	vector<long double> coloneConverted;
-	vector <string> content;
-	//string::size_type st;
-	long double value;
-	for (int i = 1 ; i < dataLines.size() ; i++){
-		content = split(dataLines[i], " ");
-		value = stold(content[numColone]);
-		coloneConverted.push_back(value); 
+	vector<string> linesFile = split(fileContent, "\n");
+	vector<long double> dataTime;
+	vector<long double> dataSignal;
+	map<string, vector<long double> > data;
+	vector<string> elements; // elements extraient d'une ligne
+	for (int i = 1 ; i < linesFile.size() ; i++){
+		elements = split(linesFile[i], " ");
+		dataTime.push_back(stold(elements[0]));
+		dataSignal.push_back(stold(elements[1]));
 	}
-	return coloneConverted;
+	data["Time"] = dataTime;
+	data["Signal"] = dataSignal;
+	return data;
 }
 
-long double calcAverage(int pos, int win_size, vector<long double> data){
-	/*
-	Calcule la moyenne sur un interval donné. Les positions de départ
-	et d'arret s'adaptent en fonction de la position dans le jeu de 
-	données. 
-	:param pos: position dans le jeu de données
-	:param win_size: interval autour de la position
-	:param data: jeu de données
-	:type pos: int 
-	:type win_size: int 
-	:type data: vector <long double>
-	:return: moyenne sur l'interval autour de la position (pos)
-	:return type: long double
-	*/
-	int pos_start = pos-win_size;
-	int pos_stop = pos+win_size;
-	
-	if (pos < win_size){ // permet d'établir le start si l'interval est supérieur à l'interval possible à gauche de pos. 
-		pos_start = 0; 
-	}
-	if (pos+win_size > data.size()){ // idem mais pour la droite de pos. 
-		pos_stop = data.size()-1;
-	}
-	int nbrValues = pos_stop - pos_start;
-	long double sum = 0;
-	
-	for (int i = pos_start ; i <= pos_stop ; i++){
-		sum += data[i];
-	}
-	return sum/nbrValues;
-}
 
 /*
  ------------------------ extract functions ---------------------------------
@@ -169,60 +141,84 @@ vector<string> splitElements (string line){
 	return content;
 }
 
-string extractChannel (int numChannel, string fileContent) {
+map<string, vector<long double> > extractChannel (int numChannel, string fileContent) {
 	/*
-	Produit à partir du contenu du fichier et du numero de channel, 
-	une string contenant les informations sur le temps et les données 
-	du canal selectionné. 
+	Extrait les données d'un canal à partir du contenu du fichier source. 
 	:param numChannel: numero du canal
-	:param fileContent: contenu du fichier de base en chaine de caractères
+	:param fileContent: contenu du fichier source
 	:type numChannel: int 
 	:type fileContent: string
-	:return newFileContent: la chaine de caractère contenant les infos du canal
-	:type return: string
+	:return Data: données de temps et données du signal du canal
+	:type newData: map<string, vector<long double> >
 	*/
 	
-	string newFileContent = "%time channel_"+to_string(numChannel)+"\n"; // première ligne du nouveau fichier  
-	vector <string> elementsLine;
-	// preparation de la source : 
-	vector<string> dataLines=split(fileContent, "\n"); // découpe des lignes
-	// creation de la nouvelle chaine de caractère :  
-	for (int i = 4 ; i < dataLines.size() ; i++){
-		elementsLine = splitElements(dataLines[i]);
-		newFileContent += elementsLine[0]+" "+elementsLine[numChannel]+"\n";
+	vector<long double> dataTime;
+	vector<long double> dataSignal;
+	map<string, vector<long double> > data;
+	// preparation des données du fichier source : 
+	vector<string> s_content = split(fileContent, "\n"); // découpe des lignes
+	vector<string>elements;
+	for (int i = 4 ; i < s_content.size() ; i++){
+		elements = splitElements(s_content[i]); // extraction des éléments de la ligne
+		dataTime.push_back(stold(elements[0])); // ajout de la valeur dans le vecteur temps (+ conversion)
+		dataSignal.push_back(stold(elements[numChannel])); // ajout de la valeur dans le vecteur signal (+ conversion)
 	}
-	return newFileContent;
+	data["Time"] = dataTime;
+	data["Signal"] = dataSignal;
+	return data;
 }
 
 /*
  ------------------------ m_average functions ---------------------------------
 */
 
-string movingAverage (string fileContent, int win_size){
+long double calcAvg(int pos, int win_size, vector<long double> dataSignal){
 	/*
-	Calcule la moyenne mobile d'un jeu de données à partir du contenu du fichier. 
-	:param fileContent: contenu du fichier de base en chaine de caractères 
-	:param win_size: taille de l'interval des moyennes
-	:type win_size: int
-	:type fileContent: string
-	:return newFileContent: contenu du nouveau fichier (temps/m_avg)
-	:type return: string
+	Calcule la moyenne sur un interval donné. Les positions de départ
+	et d'arret s'adaptent en fonction de la position dans le jeu de 
+	données. 
+	:param pos: position dans le jeu de données
+	:param win_size: interval autour de la position
+	:param dataSignal: jeu de données
+	:type pos: int 
+	:type win_size: int 
+	:type data: vector <long double>
+	:return: moyenne sur l'interval autour de la position (pos)
+	:return type: long double
 	*/
-	// 1) preparation des données : 
-	vector<string> dataLines = split(fileContent, "\n");
-	vector<long double> ColoneTime = convertColoneStoLD(0, dataLines);
-	vector<long double> ColoneChannel = convertColoneStoLD(1, dataLines); 
-	// 2) calcule de la moyenne mobile : 
+	int pos_start = pos-win_size;
+	int pos_stop = pos+win_size;
+	
+	if (pos < win_size){ // permet d'établir le start si l'interval est supérieur à l'interval possible à gauche de pos. 
+		pos_start = 0; 
+	}
+	if (pos+win_size > dataSignal.size()){ // idem mais pour la droite de pos. 
+		pos_stop = dataSignal.size()-1;
+	}
+	int nbrValues = pos_stop - pos_start;
+	long double sum = 0;
+	
+	for (int i = pos_start ; i <= pos_stop ; i++){
+		sum += dataSignal[i];
+	}
+	return sum/nbrValues;
+}
+
+vector<long double> calcMovingAvg (vector<long double> dataSignal, int win_size){
+	/*
+	Calcules la moyenne mobile d'un jeux de données. 
+	:param dataSignal: jeu de données
+	:param win_size: interval de la moyenne
+	:type dataSignal: vector<long double>
+	:param win_size: int
+	:return mvAvg: moyenne mobile
+	:type return: vector<long double>
+	*/
 	vector <long double> mvAvg;
 	long double avg;
-	for (int i = 0 ; i < ColoneTime.size() ; i++){
-		avg = calcAverage(i, win_size, ColoneChannel);
+	for (int i = 0 ; i < dataSignal.size() ; i++){
+		avg = calcAvg(i, win_size, dataSignal);
 		mvAvg.push_back(avg);
 	}
-	// 3) preparation du nouveau fichier : 
-	string newFileContent = "%time av_value\n";
-	for (int i = 0 ; i < ColoneTime.size() ; i++){
-		newFileContent += to_string(ColoneTime[i])+" "+to_string(mvAvg[i])+"\n";
-	}
-	return newFileContent;
+	return mvAvg;
 }

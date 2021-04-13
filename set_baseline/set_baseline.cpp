@@ -9,37 +9,25 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <map>
 #include "myToolBox.h"
 using namespace std; // utilisation de l'espace de nom de std
 
-string set_baseline(string fileContent, int numChannel, int win_size){
-	// Extraction des données du fichier source
-	string contentExtract = extractChannel(numChannel, fileContent);
-	string fileNameExtract = "channel_"+to_string(numChannel)+".txt";
-	writeFile(contentExtract, fileNameExtract); 
-	cout << "** Extraction des données effectuée" << endl; 
-	// Calcule de la moyenne mobile 
-	string contentAvg = movingAverage(contentExtract, win_size);
-	string fileNameAvg = "avg_channel_"+to_string(numChannel)+".txt";
-	writeFile(contentAvg, fileNameAvg);
-	cout << "** Calcule de ma moyenne mobile effectuée" << endl;
-	//  soustraction de la baseline au signal original 
-	vector <string> linesExtract = split(contentExtract, "\n");
-	vector <string> linesAvg = split(contentAvg, "\n");
-	vector <long double> colTime = convertColoneStoLD(0, linesExtract);
-	vector <long double> colSignal = convertColoneStoLD(1, linesExtract);
-	vector <long double> colBaseLine = convertColoneStoLD(1, linesAvg);
-	cout << colBaseLine[0] << endl; 
-	long double c_value;
-	string newFileContent = "%time c_channel_"+to_string(numChannel)+"\n";
-	for (int i = 0 ; i < colTime.size() ; i++){
-		c_value = colSignal[i] - colBaseLine[i];
-		cout << "c_value = " << c_value << endl; 
-		newFileContent += to_string(colTime[i])+" "+to_string(c_value)+"\n";
+vector <long double> set_baseline (vector<long double> dataSignal, int win_size){
+	vector<long double> c_dataSignal;
+	// calcule de la moyenne mobile : 
+	cout << "*** Calcule de la moyenne mobile" << endl; 
+	vector<long double> mvAvg = calcMovingAvg(dataSignal, win_size);
+	// soustraction de la base-line au signal de base 
+	cout << "*** Soustraction de la base-line au signal d'origine" << endl;
+	long double c_value; 
+	for (int i = 0 ; i < dataSignal.size() ; i++){
+		c_value = dataSignal[i]-mvAvg[i];
+		c_dataSignal.push_back(c_value);
 	}
-	cout << "* Soustraction de la baseline effectuée" << endl; 
-	return newFileContent;
+	return c_dataSignal; 
 }
+
 int main (int argc, char *argv[]){
 	try {
 		// recuperation des arguments 
@@ -48,9 +36,20 @@ int main (int argc, char *argv[]){
 		int numChannel = stoi(argv[3]);
 		int win_size = stoi(argv[4]);
 		// recupération du contenu du fichier source
-		string fileContent = read_data(fileName);
-		// Calcule de la baseline
-		string newFileContent = set_baseline(fileContent, numChannel, win_size); 
+		cout << "* Extraction des données du fichier " << fileName << endl;
+		string fileContent = readFile(fileName);
+		map<string, vector<long double> > dataChannel = extractChannel(numChannel, fileContent);
+		cout << "** Données extraites" << endl;
+		// soustraction de la base-line 
+		cout << "* Correction du signal" << endl;
+		vector<long double> c_dataSignal = set_baseline(dataChannel["Signal"], win_size);
+		// Ecriture du fichier 
+		string newFileContent = "%time c_channel_"+to_string(numChannel)+"\n";
+		for (int i = 0 ; i < dataChannel["Time"].size() ; i++){
+			newFileContent += to_string(dataChannel["Time"][i])+" "+to_string(c_dataSignal[i])+"\n";
+		}
+		writeFile(newFileContent, newFileName);
+		cout << "** fichier " << newFileName << " créé" << endl; 
 		writeFile(newFileContent, newFileName);
 	}catch(exception& ex){
 		cerr << "Erreur : probleme dans les arguments" << endl;

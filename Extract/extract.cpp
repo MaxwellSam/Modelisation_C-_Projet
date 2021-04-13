@@ -9,9 +9,10 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <map>
 using namespace std; // utilisation de l'espace de nom de std
 
-string read_data(string file){
+string readFile(string file){
 	/*
 	Lecture d'un fichier txt
 	:param file: nom du fichier
@@ -107,64 +108,52 @@ vector<string> splitElements (string line){
 	return content;
 }
 
-string extractChannel (int numChannel, string filename) {
+map<string, vector<long double> > extractChannel (int numChannel, string fileContent) {
 	/*
-	Produit à partir du nom du fichier et du numero de channel, 
-	une string contenant les informations sur le temps et les données 
-	du canal selectionné. 
+	Extrait les données d'un canal à partir du contenu du fichier source. 
 	:param numChannel: numero du canal
-	:param filename: nom du fichier de base
+	:param fileContent: contenu du fichier source
 	:type numChannel: int 
-	:type filename: string
-	:return newData: la chaine de caractère contenant les infos du canal
-	:type newData: string
+	:type fileContent: string
+	:return Data: données de temps et données du signal du canal
+	:type newData: map<string, vector<long double> >
 	*/
 	
-	string newData = "";  
-	vector <string> elementsLine;
-	// preparation de la source : 
-	string content=read_data(filename); // extraction du fichier
-	vector<string> dataLines=split(content, "\n"); // découpe des lignes
-	// creation de la nouvelle chaine de caractère :  
-	newData += "%time channel_"+to_string(numChannel)+"\n"; // première ligne du fichier
-	for (int i = 4 ; i < dataLines.size() ; i++){
-		elementsLine = splitElements(dataLines[i]);
-		cout << elementsLine[numChannel] << endl;
-		newData += elementsLine[0]+" "+elementsLine[numChannel]+"\n"; 
+	vector<long double> dataTime;
+	vector<long double> dataSignal;
+	map<string, vector<long double> > data;
+	// preparation des données du fichier source : 
+	vector<string> s_content = split(fileContent, "\n"); // découpe des lignes
+	vector<string>elements;
+	for (int i = 4 ; i < s_content.size() ; i++){
+		elements = splitElements(s_content[i]); // extraction des éléments de la ligne
+		dataTime.push_back(stold(elements[0])); // ajout de la valeur dans le vecteur temps (+ conversion)
+		dataSignal.push_back(stold(elements[numChannel])); // ajout de la valeur dans le vecteur signal (+ conversion)
 	}
-	return newData;
-}
-
-bool Contains(int num, vector<int> listNum){
-	/*
-	Verifie la presence du nombre dans la liste. 
-	:param num: nombre 
-	:param listNum: liste de nombres
-	:type num: int 
-	:type listNum: vector<int>
-	:return rep: reponse de la verification 
-	:type return: bool 
-	*/
-	bool rep = false;
-	for (int i = 0 ; i < listNum.size() ; i++){
-		if (listNum[i]==num){
-			rep = true;
-			break;
-		}
-	}
-	return rep; 
+	data["Time"] = dataTime;
+	data["Signal"] = dataSignal;
+	return data;
 }
 
 int main(int argc, char *argv[]){
 	
 	try {
+		cout << "* extraction des données du canal " << argv[3] << endl;
+		// recuperation des arguments :
 		string fileName = argv[1];
 		string newFileName = argv[2];
 		int numChannel = stoi(argv[3]);
-		string dataChannel = extractChannel(numChannel, fileName);
-		cout << dataChannel << endl;
-		cout << endl << dataChannel << endl; 
-		writeFile(dataChannel, newFileName);
+		// extraction des données du canal :  
+		string fileContent = readFile(fileName);
+		map<string, vector<long double> > dataChannel = extractChannel(numChannel, fileContent);
+		cout << "** données du canal extraites" << endl;
+		// ecriture du fichier :
+		string newFileContent = "%time channel_"+to_string(numChannel)+"\n"; // header
+		for (int i = 0 ; i < dataChannel["Time"].size() ; i++){
+			newFileContent += to_string(dataChannel["Time"][i])+" "+to_string(dataChannel["Signal"][i])+"\n";
+		}
+		writeFile(newFileContent, newFileName);
+		cout << "** fichier " << newFileName << " créé" << endl;
 		return 0;
 	} catch (exception& ex){
 		cerr << "Erreur : probleme dans les arguments" << endl;
