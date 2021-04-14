@@ -146,6 +146,7 @@ vector<long double> calcMovingAvg (vector<long double> dataSignal, int win_size)
 	long double avg;
 	for (int i = 0 ; i < dataSignal.size() ; i++){
 		avg = calcAvg(i, win_size, dataSignal);
+		cout << "Avg = " << avg <<endl;
 		mvAvg.push_back(avg);
 	}
 	return mvAvg;
