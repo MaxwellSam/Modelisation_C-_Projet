@@ -6,13 +6,6 @@
 dev.new(width=7, height=4)
 df=read.table("overlay_channel_2.txt",header=F)
 
-# plot(main = "Overlay",
-# 	type="l",
-# 	col="#3182bd",
-# 	xlab = "time [ms]",
-# 	ylab = "Signal [mv]"
-# 	)
-
 maximum = 0
 minimum = 0
 for (i in 1:length(df)){

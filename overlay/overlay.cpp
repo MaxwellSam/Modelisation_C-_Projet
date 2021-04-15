@@ -68,7 +68,6 @@ vector <vector <string> > overlay (vector<string> dataSignal, vector<string> dat
 	vector<string> colTime;
 	for (long double i = -before ; i <= after ; i = round(i+step, 1)){
 		colTime.push_back(to_string(i));
-		cout << "i = " << i;
 	}
 	
 	data.push_back(colTime);
@@ -86,6 +85,7 @@ vector <vector <string> > overlay (vector<string> dataSignal, vector<string> dat
 			data.push_back(newColSpike);
 		}
 	}
+	cout << cmpt_spike << " PA trouvés sur " << cmpt_ms << " ms" << endl;
 	return data;
 }
 
@@ -107,18 +107,11 @@ int main (int argc, char *argv[]){
 		cout << "* Ecriture du fichier" << endl;
 		string content = "";
 		string line = "";
-		cout << "dataOverlay.size() = " << dataOverlay.size() << endl;
-		cout << "dataOverlay[0].size()" << dataOverlay[0].size() << endl;
-		for (int k = 0 ; k < dataOverlay.size() ; k++){
-			cout << k << " : " << dataOverlay[k].size() << " ; "; 
-		}
-		cout << endl << endl;
 		for (int i = 0 ; i < dataOverlay[0].size() ; i++){
 			for (int j = 0 ; j < dataOverlay.size() ; j++){
 				line+= dataOverlay[j][i]; 
 				if (j == dataOverlay.size()-1){
 					line+="\n";
-					cout << line << endl;
 					content+=line;
 					line = "";
 				} else {
