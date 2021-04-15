@@ -11,6 +11,7 @@ string readFile(string file);
 void writeFile (string fileContent,string newfileName);
 vector<string> split(string value, string sep);
 map<string, vector<long double> > getColumnsChannel (string fileContent);
+long double round(long double var, int n);
 
 // extract functions :
 vector<string> splitElements (string line);

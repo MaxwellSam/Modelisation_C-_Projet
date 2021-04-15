@@ -107,6 +107,31 @@ map<string, vector<long double> > getColumnsChannel (string fileContent){
 	return data;
 }
 
+long double round(long double var, int n){
+	/*
+	Calcule l'arrondi de la valeur var à n chiffre après la virgule.
+	:param var: valeur à arrondir
+	:param n: nombre de chiffres après la virgule
+	:type var: long double
+	:type n: int
+	:return: la valeur arrondie de var à 10^(-n)
+	:type return: long double  
+	*/
+	int b = 10;
+	int roundScale = 1;
+	for (int i = 0 ; i < n ; i++){
+		roundScale = roundScale * b;
+	}
+	long double value;
+	if (var < 0){
+		value = (int)(var*roundScale - 0.5);
+	} else{
+		value = (int)(var*roundScale + 0.5);
+	}
+	return (long double)value/roundScale;
+	
+}
+
 
 /*
  ------------------------ extract functions ---------------------------------
