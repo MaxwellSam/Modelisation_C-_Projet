@@ -34,35 +34,12 @@ long double round(long double var, int n){
 
 int main (){
 	vector<double> vect;
-	float before = -1.0f;
-	float after = 1.0f;
-	float step = 0.1f;
-	int t1 = before/step;
-	int t2 = after/step; 
-	long double value = 0.28955;
-	long double newValue = round(value, 1);
-	cout << "test = " << newValue << endl;
-	for (float i = before ; i <= after ; i = round(i+step, 1)){
-		cout << i << " ; ";
-		vect.push_back(i);
-	}
-	
-	// vect.push_back(before);
-// 	cout << vect[0] << endl;
-// 	double val = before;
-// 	while(true){
-// 		val = val+step;
-//
-// 		cout << val << endl;
-// 		vect.push_back(val);
-// 		if (val == after){
-// 			break;
-// 		}
-// 	}
-	
-	cout << endl;
-	for (int i = 0 ; i <= vect.size() ; i++){
-		cout << vect[i] << endl;
-	}
+	vect.push_back(2); 
+	vect.push_back(1);
+	cout << "size " << vect.size() << endl;  
+	double last = vect[vect.size()-1];
+	vect.pop_back();
+	cout << "size " << vect.size() << endl;  
+	cout << last << endl;  
 	
 }
